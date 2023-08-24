@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{17F98DEC-92CF-47E8-9EEB-6CB62ECDA96F}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Server\NetSocket.Server.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Client\NetSocket.Client.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="NetSocket_Server">
+        <MSBuild Projects="Server\NetSocket.Server.dproj"/>
+    </Target>
+    <Target Name="NetSocket_Server:Clean">
+        <MSBuild Projects="Server\NetSocket.Server.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="NetSocket_Server:Make">
+        <MSBuild Projects="Server\NetSocket.Server.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="NetSocket_Client">
+        <MSBuild Projects="Client\NetSocket.Client.dproj"/>
+    </Target>
+    <Target Name="NetSocket_Client:Clean">
+        <MSBuild Projects="Client\NetSocket.Client.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="NetSocket_Client:Make">
+        <MSBuild Projects="Client\NetSocket.Client.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="NetSocket_Server;NetSocket_Client"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="NetSocket_Server:Clean;NetSocket_Client:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="NetSocket_Server:Make;NetSocket_Client:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
