@@ -127,6 +127,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="System.Net.ServerSocket.pas"/>
+        <DCCReference Include="..\Common\System.Net.Socket.Common.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
