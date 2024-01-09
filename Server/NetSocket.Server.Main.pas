@@ -57,7 +57,7 @@ begin
   LNewSocket := ANewSocket;
   Result := procedure
   var
-    LSendString, LJSONS: string;
+    LSendString, LText, LJSONS: string;
     LReceiveBuffer: TBytes;
     LByteCount: Integer;
     LReceiveTimeout, LID: Integer;
@@ -80,12 +80,15 @@ begin
                 Memo1.Lines.Add(LReceivedString);
             end);
             LSendString := '';
+            // place breakpoint below
             LJSON := TJSONObject.ParseJSONValue(LJSONS);
             try
-              if Assigned(LJSON) and LJSON.TryGetValue<Integer>('id', LID) then
+              if Assigned(LJSON) and LJSON.TryGetValue<Integer>('id', LID) and
+                LJSON.TryGetValue<string>('params.Text', LText) then
                 begin
-                  LSendString := Format('{"jsonrpc": 2.0, "id": %d, "Name": "%s"}',
-                    [LID, '我们好！']);
+                  LSendString := Format('{"jsonrpc": 2.0, "id": %d, "echo": "%s"}',
+                    [LID, LText]);
+                  OutputDebugString(PChar(LSendString));
                 end;
               if LSendString <> '' then
                 begin

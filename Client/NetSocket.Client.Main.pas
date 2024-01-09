@@ -65,9 +65,9 @@ begin
   Inc(FID);
   LText :=  Format(
   '''
-  {"jsonrpc": 2.0, "method": "你好", "params": {"ADateTime":"%s"}, "id": %d}
+  {"jsonrpc": 2.0, "method": "回声", "params": {"Text":"%s"}, "id": %d}
   '''
-  , [DateToISO8601(Now), FID]);
+  , [Edit1.Text, FID]);
   FSocket.Send(LText);
   FSocket.Receive(LByteCount, SizeOf(LByteCount));
   FSocket.Receive(LBuffer, LByteCount);

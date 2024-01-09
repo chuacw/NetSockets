@@ -42,7 +42,7 @@ object frmSocketClient: TfrmSocketClient
     Margins.Right = 7
     Margins.Bottom = 7
     TabOrder = 1
-    Text = 'Hello world!'
+    Text = #12362#12399#12424#12358
   end
   object Memo1: TMemo
     Left = 18
