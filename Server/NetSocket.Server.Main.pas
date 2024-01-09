@@ -1,4 +1,4 @@
-unit NetSocket.Server.Main;
+﻿unit NetSocket.Server.Main;
 
 interface
 
@@ -17,7 +17,7 @@ type
     FServerSocket: TServerSocket;
 
   protected
-    function RunThread(AServerSocket: TServerSocket; ASocket: System.Net.Socket.TSocket): TProc;
+    function RunThread(AServerSocket: TServerSocket; ANewSocket: System.Net.Socket.TSocket): TProc;
   public
     { Public declarations }
   end;
@@ -28,8 +28,7 @@ var
 implementation
 
 uses
-  System.Net.Socket.Common,
-  System.JSON;
+  System.Net.Socket.Common, System.JSON, System.Types, Winapi.Winsock2;
 
 {$R *.dfm}
 
@@ -38,54 +37,72 @@ var
   LEndpoint: TNetEndpoint;
 begin
   FServerSocket := TServerSocket.Create(RunThread);
-  FServerSocket.ReceiveTimeout := 50;
+  FServerSocket.ReceiveTimeout := 500;
   LEndpoint.Port := 8083;
-  LEndpoint.Family := AF_INET;
-  LEndpoint.SetAddress('localhost');
+  LEndpoint.Family := AF_INET; // IPv6 not supported by System.Net.Socket
+  LEndpoint.Address := TIPAddress.Any;
   FServerSocket.Listen(LEndpoint);
 end;
 
 procedure TfrmSocketServer.FormDestroy(Sender: TObject);
 begin
-  FServerSocket.Free;
+  FreeAndNil(FServerSocket);
 end;
 
-function TfrmSocketServer.RunThread(AServerSocket: TServerSocket; ASocket: System.Net.Socket.TSocket): TProc;
+function TfrmSocketServer.RunThread(AServerSocket: TServerSocket;
+  ANewSocket: System.Net.Socket.TSocket): TProc;
+var
+  LNewSocket: System.Net.Socket.TSocket;
 begin
+  LNewSocket := ANewSocket;
   Result := procedure
   var
     LSendString, LJSONS: string;
-    LReceiveBuffer, LSendBuffer: TBytes;
+    LReceiveBuffer: TBytes;
+    LByteCount: Integer;
     LReceiveTimeout, LID: Integer;
     LJSON: TJSONValue;
+    LLocalSocket: System.Net.Socket.TSocket;
   begin
+    LLocalSocket := LNewSocket;
     while not AServerSocket.Terminated do
       begin
-        LReceiveBuffer := ASocket.Receive; // ReceivedFrom;
+        LReceiveBuffer := LLocalSocket.Receive; // ReceivedFrom;
         if Length(LReceiveBuffer) <> 0 then
           begin
-            LJSONS := StringOf(LReceiveBuffer);
+            LJSONS := LLocalSocket.Encoding.GetString(LReceiveBuffer);
             TThread.Synchronize(nil, procedure
             var
               LReceivedString: string;
             begin
-              LReceivedString := StringOf(LReceiveBuffer);
+              LReceivedString := LLocalSocket.Encoding.GetString(LReceiveBuffer);
               if LReceivedString <> '' then
                 Memo1.Lines.Add(LReceivedString);
             end);
             LSendString := '';
             LJSON := TJSONObject.ParseJSONValue(LJSONS);
-            if Assigned(LJSON) and LJSON.TryGetValue<Integer>('id', LID) then
-              begin
-                LSendString := Format('{"jsonrpc": 2.0, "id": %d}', [LID]);
-              end;
-            LSendBuffer := BytesOf(LSendString);
-            ASocket.Send(LSendBuffer);
+            try
+              if Assigned(LJSON) and LJSON.TryGetValue<Integer>('id', LID) then
+                begin
+                  LSendString := Format('{"jsonrpc": 2.0, "id": %d, "Name": "%s"}',
+                    [LID, '我们好！']);
+                end;
+              if LSendString <> '' then
+                begin
+                  LByteCount := LLocalSocket.Encoding.GetByteCount(LSendString);
+                  LLocalSocket.Send(LByteCount, SizeOf(LByteCount));
+                  LLocalSocket.Send(LSendString);
+                  LSendString := '';
+                end;
+            finally
+              LJSON.Free;
+            end;
           end;
         LReceiveTimeout := AServerSocket.ReceiveTimeout;
 
         Sleep(LReceiveTimeout);
       end;
+    FreeAndNil(LLocalSocket);
   end;
 end;
 

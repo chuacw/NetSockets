@@ -3,13 +3,15 @@ unit System.Net.ServerSocket;
 interface
 
 uses
-  System.Net.Socket, System.Classes, System.SysUtils,
-  System.Net.Socket.Common;
+  Winapi.Winsock2, System.Net.Socket, System.Classes, System.SysUtils;
 
 type
 
+  TNetEndpoint = System.Net.Socket.TNetEndpoint;
   TServerSocket = class;
-  TRunThread = reference to function (AServerSocket: TServerSocket; ASocket: System.Net.Socket.TSocket): TProc;
+  TProc = System.SysUtils.TProc;
+  TRunThread = reference to function (AServerSocket: TServerSocket;
+    ASocket: System.Net.Socket.TSocket): TProc;
 
   TServerSocket = class
   private
@@ -26,6 +28,7 @@ type
     FThread: TThread;
     FThreadList: TThreadList;
     FRunThread: TRunThread;
+
 
     function GetAddress: string; inline;
     procedure SetAddress(const Value: string); inline;
@@ -61,6 +64,9 @@ type
 
 implementation
 
+uses
+  System.Types;
+
 { TServerSocket }
 
 function TServerSocket.Accept(Timeout: Cardinal): TSocket;
@@ -74,38 +80,46 @@ begin
 end;
 
 constructor TServerSocket.Create(const ARunThread: TRunThread);
+var
+  LThread: TThread;
+  LRunThread: TRunThread;
 begin
+  FTerminated := False;
   Assert(Assigned(ARunThread), 'ARunThread not assigned!');
 
-  FRunThread := ARunThread;
+  LRunThread := ARunThread;
 
   CreateThreadList;
 
   FSocket := System.Net.Socket.TSocket.Create(TSocketType.TCP, TEncoding.UTF8);
-  FSocket.ConnectTimeout := 150;
-  FSocket.ReceiveTimeout := 150;
-  FSocket.SendTimeout := 150;
+{$IF DECLARED(ConnectTimeout)}
+  FSocket.ConnectTimeout := 500;
+{$ENDIF}
+  FSocket.ReceiveTimeout := 500;
+  FSocket.SendTimeout := 500;
 
-  FThread := TThread.CreateAnonymousThread(procedure
+  LThread := TThread.CreateAnonymousThread(procedure
   var
     LNewSocket: System.Net.Socket.TSocket;
     LNewThread: TThread;
     LServerSocket: System.Net.Socket.TSocket;
+    LThreadList: TThreadList;
   begin
     LServerSocket := FSocket;
-    while (not (TSocketState.Listening in LServerSocket.State) and (not FTerminated)) do
+    LThreadList := FThreadList;
+    while (not (TSocketState.Listening in LServerSocket.State) and (not TThread.CheckTerminated)) do
       begin
         Sleep(10);
       end;
     try
-      while not FTerminated do
+      while not (TThread.CheckTerminated and FTerminated) do
         begin
           try
             LNewSocket := LServerSocket.Accept(LServerSocket.ReceiveTimeout); // throws exception if not listening
             if Assigned(LNewSocket) then
               begin
-                LNewThread := TThread.CreateAnonymousThread(FRunThread(Self, LNewSocket));
-                FThreadList.Add(LNewThread);
+                LNewThread := TThread.CreateAnonymousThread(LRunThread(Self, LNewSocket));
+                LThreadList.Add(LNewThread);
                 LNewThread.FreeOnTerminate := False;
                 LNewThread.Start;
               end;
@@ -116,8 +130,9 @@ begin
     end;
   end);
 
-  FThread.FreeOnTerminate := False;
-  FThread.Start;
+  FThreadList.Add(LThread);
+  LThread.FreeOnTerminate := False;
+  LThread.Start;
 end;
 
 procedure TServerSocket.CreateThreadList;
@@ -128,13 +143,11 @@ end;
 destructor TServerSocket.Destroy;
 begin
   Terminate;
-  FThread.WaitFor;
-  FThread.Free;
-
   FreeThreadList;
 
-  FSocket.Close(True);
-  FSocket.Free;
+  if TSocketState.Listening in FSocket.State then
+    FSocket.Close(True);
+  FreeAndNil(FSocket);
   inherited;
 end;
 
@@ -144,6 +157,7 @@ var
   LListCount: Integer;
   LThread: TThread;
 begin
+  LThread := nil;
   if Assigned(FThreadList) then
     repeat
       LList := FThreadList.LockList;
@@ -152,12 +166,9 @@ begin
         begin
           LThread := TThread(LList.Last);
           if Assigned(LThread) then
-            begin
-              LThread.Terminate;
-              LThread.WaitFor;
-              LThread.Free;
-            end;
+            LThread.WaitFor;
           LList.Remove(LThread);
+          FreeAndNil(LThread);
           FThreadList.UnlockList;
         end;
     until LListCount = 0;
@@ -204,7 +215,7 @@ procedure TServerSocket.Listen(const Endpoint: TNetEndpoint;
 begin
   if not Assigned(FThreadList) then
     CreateThreadList;
-  FSocket.Listen(Endpoint, QueueSize)
+  FSocket.Listen(Endpoint, QueueSize);
 end;
 
 procedure TServerSocket.SetAddress(const Value: string);
@@ -242,9 +253,21 @@ begin
 end;
 
 procedure TServerSocket.Terminate;
+var
+  LList: Tlist;
+  I: Integer;
 begin
   FTerminated := True;
-  FThread.Terminate;
+  if Assigned(FThreadList) then
+    begin
+      LList := FThreadList.LockList;
+      try
+        for I := 0 to LList.Count-1 do
+          TThread(LList[I]).Terminate;
+      finally
+        FThreadList.UnlockList;
+      end;
+    end;
 end;
 
 end.

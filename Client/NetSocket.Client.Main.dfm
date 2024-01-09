@@ -1,58 +1,58 @@
 object frmSocketClient: TfrmSocketClient
   Left = 2065
   Top = 861
-  Margins.Left = 8
-  Margins.Top = 8
-  Margins.Right = 8
-  Margins.Bottom = 8
+  Margins.Left = 7
+  Margins.Top = 7
+  Margins.Right = 7
+  Margins.Bottom = 7
   Caption = 'Socket Client'
-  ClientHeight = 1114
-  ClientWidth = 1588
+  ClientHeight = 1003
+  ClientWidth = 1429
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -30
+  Font.Height = -27
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poDesigned
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 240
-  TextHeight = 41
+  PixelsPerInch = 216
+  TextHeight = 37
   object Button1: TButton
-    Left = 1280
-    Top = 940
-    Width = 188
-    Height = 63
-    Margins.Left = 8
-    Margins.Top = 8
-    Margins.Right = 8
-    Margins.Bottom = 8
+    Left = 1152
+    Top = 846
+    Width = 169
+    Height = 57
+    Margins.Left = 7
+    Margins.Top = 7
+    Margins.Right = 7
+    Margins.Bottom = 7
     Caption = 'Send'
     TabOrder = 0
     OnClick = Button1Click
   end
   object Edit1: TEdit
-    Left = 13
-    Top = 760
-    Width = 1448
-    Height = 49
-    Margins.Left = 8
-    Margins.Top = 8
-    Margins.Right = 8
-    Margins.Bottom = 8
+    Left = 12
+    Top = 684
+    Width = 1303
+    Height = 45
+    Margins.Left = 7
+    Margins.Top = 7
+    Margins.Right = 7
+    Margins.Bottom = 7
     TabOrder = 1
     Text = 'Hello world!'
   end
   object Memo1: TMemo
-    Left = 20
-    Top = 20
-    Width = 1541
-    Height = 661
-    Margins.Left = 8
-    Margins.Top = 8
-    Margins.Right = 8
-    Margins.Bottom = 8
+    Left = 18
+    Top = 18
+    Width = 1387
+    Height = 595
+    Margins.Left = 7
+    Margins.Top = 7
+    Margins.Right = 7
+    Margins.Bottom = 7
     TabOrder = 2
   end
 end

@@ -1,32 +1,32 @@
 object frmSocketServer: TfrmSocketServer
   Left = 0
   Top = 0
-  Margins.Left = 8
-  Margins.Top = 8
-  Margins.Right = 8
-  Margins.Bottom = 8
+  Margins.Left = 7
+  Margins.Top = 7
+  Margins.Right = 7
+  Margins.Bottom = 7
   Caption = 'Socket Server'
-  ClientHeight = 1114
-  ClientWidth = 1588
+  ClientHeight = 1003
+  ClientWidth = 1426
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -30
+  Font.Height = -27
   Font.Name = 'Segoe UI'
   Font.Style = []
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 240
-  TextHeight = 41
+  PixelsPerInch = 216
+  TextHeight = 37
   object Memo1: TMemo
-    Left = 13
-    Top = 40
-    Width = 1528
-    Height = 481
-    Margins.Left = 8
-    Margins.Top = 8
-    Margins.Right = 8
-    Margins.Bottom = 8
+    Left = 12
+    Top = 36
+    Width = 1375
+    Height = 433
+    Margins.Left = 7
+    Margins.Top = 7
+    Margins.Right = 7
+    Margins.Bottom = 7
     TabOrder = 0
   end
 end

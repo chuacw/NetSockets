@@ -1,4 +1,4 @@
-unit NetSocket.Client.Main;
+﻿unit NetSocket.Client.Main;
 
 interface
 
@@ -30,7 +30,8 @@ var
 implementation
 
 uses
-  System.Net.Socket.Common, System.DateUtils;
+  System.Net.Socket.Common, System.DateUtils, Winapi.Winsock2,
+  System.Net.Socket;
 
 {$R *.dfm}
 
@@ -39,10 +40,11 @@ var
   LEndpoint: TNetEndpoint;
   LBuffer: TBytes;
   LText: string;
+  LByteCount: Integer;
 begin
   if IsDebuggerPresent then
     begin
-      FSocket.ReceiveTimeout := 150;
+      FSocket.ReceiveTimeout := 500;
       FSocket.SendTimeout := FSocket.ReceiveTimeout;
       FSocket.ConnectTimeout := FSocket.ReceiveTimeout;
     end else
@@ -56,78 +58,31 @@ begin
     begin
       LEndpoint.Port := 8083;
       LEndpoint.SetAddress('localhost');
-      LEndpoint.Family := AF_INET;
+      LEndpoint.Family := AF_INET; // IPv6 not supported by System.Net.Socket
       FSocket.Connect(LEndpoint);
     end;
 //  LText := Format('%s - %s', [FormatDateTime('hh:nn:ss', Now), Edit1.Text]);
   Inc(FID);
   LText :=  Format(
   '''
-  {"jsonrpc": 2.0, "method": "GetSomeDate", "params": {"ADateTime":"%s"}, "id": %d}
+  {"jsonrpc": 2.0, "method": "你好", "params": {"ADateTime":"%s"}, "id": %d}
   '''
   , [DateToISO8601(Now), FID]);
-  LBuffer := BytesOf(LText);
-
-  FSocket.Send(LBuffer);
-  LBuffer := nil;
-
-  FSocket.Receive(LBuffer);
+  FSocket.Send(LText);
+  FSocket.Receive(LByteCount, SizeOf(LByteCount));
+  FSocket.Receive(LBuffer, LByteCount);
   if Length(LBuffer) <> 0 then
     begin
-      var LReceivedString := StringOf(LBuffer);
+      var LReceivedString := FSocket.Encoding.GetString(LBuffer);
       Memo1.Lines.Add(LReceivedString);
     end;
-
-//  LTotalSleep := 0;
-//  while (FSocket.ReceiveLength = 0) do
-//    begin
-//      Sleep(10);
-//      Inc(LTotalSleep, 10);
-//      if LTotalSleep > FSocket.ReceiveTimeout then
-//        Break;
-//    end;
 end;
 
 procedure TfrmSocketClient.FormCreate(Sender: TObject);
 begin
-//  FSocket := System.Net.Socket.TSocket.Create(TSocketType.TCP, TEncoding.UTF8);
   FSocket := TClientSocket.Create;
-  FSocket.ReceiveTimeout := 500;
+  FSocket.ReceiveTimeout := 150;
   FID := 0;
-//  FThread := TThread.CreateAnonymousThread(procedure
-//  var
-//    LReceiveBuffer: TBytes;
-////    LSocket: System.Net.Socket.TSocket;
-//    LSocket: TClientSocket;
-//  begin
-//    LSocket := FSocket;
-//    try
-//      while Assigned(FThread) and not TThread.CheckTerminated do
-//        begin
-//          LReceiveBuffer := nil;
-//          // LSocket := FSocket;
-//          if TSocketState.Connected in LSocket.State then
-//            begin
-//              LReceiveBuffer := LSocket.Receive;
-//              if Length(LReceiveBuffer) <> 0 then
-//                begin
-//                  TThread.Synchronize(nil, procedure
-//                  var
-//                    LReceiveString: string;
-//                  begin
-//                    LReceiveString := StringOf(LReceiveBuffer);
-//                    Memo1.Lines.Add(LReceiveString);
-//                  end);
-//                end;
-//            end;
-//          Sleep(LSocket.ReceiveTimeout);
-//        end;
-//      OutputDebugString('Terminating...');
-//    except
-//    end;
-//  end);
-//  FThread.FreeOnTerminate := False;
-//  FThread.Start;
 end;
 
 procedure TfrmSocketClient.FormDestroy(Sender: TObject);
